@@ -1,11 +1,18 @@
 import os
 import json
+import yaml
 
-def get_JSON_file(path):
+def get_string_file(path):
     file = open(path, "r")
-    content = json.loads(file.read())
+    content = file.read()
     file.close()
     return content
+
+def get_JSON_file(path):
+    return json.loads(get_string_file(path))
+
+def get_YAML_file(path):
+    return yaml.safe_load(get_string_file(path))
 
 def get_repo_credentials(repo_name):
     credentials = get_JSON_file("credentials.json")
@@ -16,8 +23,13 @@ def put_file(path,content):
     file.write(content)
     file.close()
 
+def put_yml_file(path,content):
+    with open(path, 'w') as file:
+        yaml.dump(content, file)
+
 def deploy(repo,revision,fqdn,env):
-    os.system('docker-compose down')
+    if os.path.isfile("docker-compose.yml"):
+        os.system('docker-compose down')
 
     initial_dir = os.getcwd()
 
@@ -33,13 +45,63 @@ def deploy(repo,revision,fqdn,env):
         repo_url = repo_protocol+"//"+user+":"+token+"@"+repo_rest_url
 
         os.system("git clone "+repo_url+" ./projects/"+sub_folder)
-    else:
-        os.chdir("./projects/"+sub_folder)
-        os.system("git fetch --all --tags")
-        os.system("git checkout "+revision)
-        os.system("git merge origin/"+revision)
-        put_file("fqdn.deploy", fqdn)
-        os.chdir(initial_dir)
-    
 
-deploy("https://code.organise.earth/monoke/cameras-scrapper","master","cameras.localhost","prod")
+    os.chdir("./projects/"+sub_folder)
+    os.system("git fetch --all --tags")
+    os.system("git checkout "+revision)
+    os.system("git merge origin/"+revision)
+    put_file("fqdn.deploy", fqdn)
+    os.chdir(initial_dir)
+
+
+def merge_docker_compose_files():
+    projects_path = "projects/"
+
+    all_services = {}
+    all_networks = {}
+
+    base_docker_compose_data = get_YAML_file("docker-compose.base.yml")
+
+    for sub_folder in os.listdir(projects_path):
+        project_path = projects_path+sub_folder+"/"
+        if not os.path.isfile(project_path+"docker-compose.yml"):
+            continue
+        
+        fqdn = get_string_file(project_path+"fqdn.deploy")
+
+        docker_compose_data = get_YAML_file(project_path+"docker-compose.yml")
+
+        prefix = sub_folder.replace(":","_")+"_"
+        
+        for service_key in docker_compose_data["services"]:
+            service = docker_compose_data["services"][service_key]
+            for key in ["build","volumes","env_file","networks","depends_on"]:
+                if key not in service:
+                    continue
+                transform_path_lambda = lambda path: "./"+project_path+path if key == "env_file" or path[:2] == "./" else prefix+path
+                if type(service[key]) is list:
+                    service[key] = list(map(transform_path_lambda, service[key]))
+                    continue
+                service[key] = transform_path_lambda(service[key])
+            if "labels" in service and "traefik.enable=true" in service["labels"]:
+                service["labels"].append("traefik.http.routers.whoami.rule=Host(`"+fqdn+"`)")
+                service["labels"].append("traefik.http.routers.whoami.entrypoints=web")
+
+            if "ports" in service:
+                service["ports"] = list(filter(lambda line: line.split(":")[0] != "80" and line.split(":")[1] != "80", service["ports"]))
+                if len(service["ports"]) == 0:
+                    del service["ports"] 
+
+            all_services[prefix+service_key] = service
+        
+        if "networks" in docker_compose_data:
+            for network in docker_compose_data["networks"]:
+                all_networks[prefix+network] = docker_compose_data["networks"][network]
+
+    base_docker_compose_data["services"].update(all_services)
+    base_docker_compose_data["networks"] = all_networks
+
+    put_yml_file("docker-compose.yml",base_docker_compose_data)
+
+merge_docker_compose_files()
+#deploy("https://code.organise.earth/monoke/cameras-scrapper","master","cameras.localhost","prod")
