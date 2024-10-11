@@ -1,3 +1,4 @@
 projects/**/*
 credentials.json
 docker-compose.yml
+*.env

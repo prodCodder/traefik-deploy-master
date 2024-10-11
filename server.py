@@ -18,6 +18,9 @@ def get_repo_credentials(repo_name):
     credentials = get_JSON_file("credentials.json")
     return credentials[repo_name]
 
+def copy_file(path_a,path_b):
+    put_file(path_b, get_string_file(path_a))
+
 def put_file(path,content):
     file = open(path,"w")
     file.write(content)
@@ -29,12 +32,12 @@ def put_yml_file(path,content):
 
 def deploy(repo,revision,fqdn,env):
     if os.path.isfile("docker-compose.yml"):
-        os.system('docker-compose down')
+       os.system('docker-compose down')
 
     initial_dir = os.getcwd()
 
     repo_name = repo.split("/")[-1].split(".git")[0]
-    sub_folder = repo_name+":"+env
+    sub_folder = repo_name+"_"+env
 
     credentials = get_repo_credentials(repo_name)
     user = credentials["user"]
@@ -70,36 +73,44 @@ def merge_docker_compose_files():
         fqdn = get_string_file(project_path+"fqdn.deploy")
 
         docker_compose_data = get_YAML_file(project_path+"docker-compose.yml")
-
-        prefix = sub_folder.replace(":","_")+"_"
         
         for service_key in docker_compose_data["services"]:
             service = docker_compose_data["services"][service_key]
-            for key in ["build","volumes","env_file","networks","depends_on"]:
+            for key in ["build","volumes","networks","depends_on"]:
                 if key not in service:
                     continue
-                transform_path_lambda = lambda path: "./"+project_path+path if key == "env_file" or path[:2] == "./" else prefix+path
+                transform_path_lambda = lambda path: "./"+project_path+path[2:] if path[:2] == "./" else sub_folder+"_"+path
                 if type(service[key]) is list:
                     service[key] = list(map(transform_path_lambda, service[key]))
                     continue
                 service[key] = transform_path_lambda(service[key])
+            
+            if "env_file" in service:
+                new_env_files = []
+                for file in service["env_file"]:
+                    new_env_file = sub_folder+file if file[0] == "." else sub_folder+"."+file
+                    copy_file(project_path+file, new_env_file)
+                    new_env_files.append(new_env_file)
+                service["env_file"] = new_env_files
+
             if "labels" in service and "traefik.enable=true" in service["labels"]:
-                service["labels"].append("traefik.http.routers.whoami.rule=Host(`"+fqdn+"`)")
-                service["labels"].append("traefik.http.routers.whoami.entrypoints=web")
+                service["networks"] = service["networks"] + ["traefik"] if "networks" in service else ["traefik"]
+                service["labels"].append("traefik.http.routers."+sub_folder+".rule=Host(`"+fqdn+"`)")
+                service["labels"].append("traefik.http.services."+sub_folder+".loadbalancer.server.port=80")
 
             if "ports" in service:
                 service["ports"] = list(filter(lambda line: line.split(":")[0] != "80" and line.split(":")[1] != "80", service["ports"]))
                 if len(service["ports"]) == 0:
                     del service["ports"] 
 
-            all_services[prefix+service_key] = service
+            all_services[sub_folder+"_"+service_key] = service
         
         if "networks" in docker_compose_data:
             for network in docker_compose_data["networks"]:
-                all_networks[prefix+network] = docker_compose_data["networks"][network]
+                all_networks[sub_folder+"_"+network] = docker_compose_data["networks"][network]
 
     base_docker_compose_data["services"].update(all_services)
-    base_docker_compose_data["networks"] = all_networks
+    base_docker_compose_data["networks"].update(all_networks)
 
     put_yml_file("docker-compose.yml",base_docker_compose_data)
 
