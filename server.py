@@ -1,3 +1,4 @@
+import re
 import os
 import json
 import yaml
@@ -30,6 +31,12 @@ def put_yml_file(path,content):
     with open(path, 'w') as file:
         yaml.dump(content, file, sort_keys=False)
 
+def interpolate(string,datas):
+    for interpolation in set(re.findall(r"\$\{[a-zA-Z0-9_-]+}", string)):
+        key = interpolation[2:-1].strip(" ")
+        string = string.replace(interpolation, datas[key] if key in datas else "undefined")
+    return string
+
 def deploy(repo,revision,fqdn,env):
     initial_dir = os.getcwd()
 
@@ -56,7 +63,6 @@ def deploy(repo,revision,fqdn,env):
     os.system("git stash pop")
     put_file("fqdn.deploy", fqdn)
     os.chdir(initial_dir)
-
 
 def compile_docker_compose(use_tls = False):
     projects_path = "projects/"
@@ -97,15 +103,16 @@ def compile_docker_compose(use_tls = False):
                 service["env_file"] = new_env_files
 
             if "labels" in service and "traefik.enable=true" in service["labels"]:
-                service["networks"] = service["networks"] + ["traefik"] if "networks" in service else ["traefik"]
+                if "networks" in service:
+                    service["networks"] += base_docker_compose_data["services"]["project_container_prototype"]["networks"]
+                else:
+                    service["networks"] = base_docker_compose_data["services"]["project_container_prototype"]["networks"]
                 
-                service["labels"].append("traefik.docker.network="+current_project_name+"_traefik")
+                datas = {"current_project_name": current_project_name, "sub_folder": sub_folder, "fqdn": fqdn}
 
-                service["labels"].append("traefik.http.routers."+sub_folder+".rule=Host(`"+fqdn+"`)")
-                service["labels"].append("traefik.http.services."+sub_folder+".loadbalancer.server.port=80")
+                service["labels"] += map(lambda string: interpolate(string,datas), base_docker_compose_data["services"]["project_container_prototype"]["labels"])
                 if use_tls == True:
-                    service["labels"].append("traefik.http.routers.cameras-scrapper_prod.entrypoints=websecure")
-                    service["labels"].append("traefik.http.routers.cameras-scrapper_prod.tls=true")
+                    service["labels"] += map(lambda string: interpolate(string,datas), base_docker_compose_data["services"]["project_container_prototype"]["labels_for_tls"])
 
             if "ports" in service:
                 service["ports"] = list(filter(lambda line: line.split(":")[0] != "80" and line.split(":")[1] != "80", service["ports"]))
@@ -126,6 +133,8 @@ def compile_docker_compose(use_tls = False):
     del base_docker_compose_data["services"]["traefik"]["command_for_tls"]
     del base_docker_compose_data["services"]["traefik"]["ports_for_tls"]
     del base_docker_compose_data["services"]["traefik"]["volumes_for_tls"]
+    
+    del base_docker_compose_data["services"]["project_container_prototype"]
 
     base_docker_compose_data["services"].update(all_services)
     base_docker_compose_data["networks"].update(all_networks)

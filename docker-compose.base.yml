@@ -24,9 +24,20 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
     volumes_for_tls:
       - "./tls:/traefik/config/tls:ro"
-      - "./traefik_config.yml:/traefik/config/dynamic_conf/traefik_config.yml:ro"
+      - "./tls_traefik_config.yml:/traefik/config/dynamic_conf/tls_traefik_config.yml:ro"
     networks:
       - traefik
+
+  project_container_prototype:
+    networks:
+      - traefik
+    labels:
+      - "traefik.docker.network=${current_project_name}_traefik"
+      - "traefik.http.routers.${sub_folder}.rule=Host(`${fqdn}`)"
+      - "traefik.http.services.${sub_folder}.loadbalancer.server.port=80"
+    labels_for_tls:
+      - "traefik.http.routers.${sub_folder}.entrypoints=websecure"
+      - "traefik.http.routers.${sub_folder}.tls=true"
 
 networks:
   traefik:
