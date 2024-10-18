@@ -1,4 +1,9 @@
 projects/**/*
+!projects/.keep
+
 credentials.json
 docker-compose.yml
 *.env
+
+tls/*
+!tls/.keep

@@ -11,11 +11,20 @@ services:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--entryPoints.web.address=:80"
+    command_for_tls:
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entryPoints.websecure.address=:443"
+      - "--providers.file.directory=/traefik/config/dynamic_conf"
     ports:
       - "80:80"
       # - "8080:8080"
+    ports_for_tls:
+      - "443:443"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    volumes_for_tls:
+      - "./tls:/traefik/config/tls:ro"
+      - "./traefik_config.yml:/traefik/config/dynamic_conf/traefik_config.yml:ro"
     networks:
       - traefik
 
