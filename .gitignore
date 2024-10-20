@@ -7,3 +7,5 @@ docker-compose.yml
 
 tls/*
 !tls/.keep
+
+tls_traefig_config.yml

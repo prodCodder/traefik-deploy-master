@@ -140,6 +140,3 @@ def compile_docker_compose(use_tls = False):
     base_docker_compose_data["networks"].update(all_networks)
 
     put_yml_file("docker-compose.yml",base_docker_compose_data)
-
-compile_docker_compose(use_tls = True)
-#deploy("https://code.organise.earth/monoke/cameras-scrapper","master","cameras.localhost","prod")

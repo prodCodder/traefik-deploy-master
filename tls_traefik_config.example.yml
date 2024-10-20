@@ -1,0 +1,11 @@
+tls:
+  certificates:
+    - certFile: /config/tls/domainA.crt
+      keyFile: /config/tls/domainA.key
+    - certFile: /config/tls/domainB.crt
+      keyFile: /config/tls/domainB.key
+  stores:
+    default:
+      defaultCertificate:
+        certFile: /traefik/config/tls/default.crt
+        keyFile: /traefik/config/tls/default.key
