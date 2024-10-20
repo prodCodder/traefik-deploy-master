@@ -48,12 +48,26 @@ def get_docker_containers(prefix = None):
         return list(filter(lambda container: container.startswith(prefix), containers))
     return containers
 
+def get_sub_project_origin(sub_folder):
+    splitted_git_config = get_string_file("./projects/"+sub_folder+"/.git/config").split("\n")
+        
+    current_section = None
+    for line in splitted_git_config:
+        line = line.strip()
+        while line.startswith("\t"):
+            line = line[1:]
+        if re.match(r"\[.+\]", line):
+            current_section = line
+            continue
+        if current_section == "[remote \"origin\"]" and line.startswith("url = "):
+            return line[6:]
+    return None
+
 def deploy(repo,revision,fqdn,env):
     initial_dir = os.getcwd()
 
     repo_name = repo.split("/")[-1].split(".git")[0]
     sub_folder = repo_name+"_"+env
-
 
     credentials = get_repo_credentials(repo_name)
     user = credentials["user"]
@@ -61,9 +75,25 @@ def deploy(repo,revision,fqdn,env):
 
     if not os.path.isdir("./projects/"+sub_folder):
         repo_protocol,repo_rest_url = repo.split("//")
-        repo_url = repo_protocol+"//"+user+":"+token+"@"+repo_rest_url
+        repo_origin = repo_protocol+"//"+user+":"+token+"@"+repo_rest_url
 
-        os.system("git clone "+repo_url+" ./projects/"+sub_folder)
+        os.system("git clone "+repo_origin+" ./projects/"+sub_folder)
+    else:
+        origin = get_sub_project_origin(sub_folder)
+        regex_res = re.search(r"[a-zA-Z0-9_\.-]+:[a-zA-Z0-9_\.-]+", origin)
+        [current_user,current_token] = regex_res.group().split(":") if regex_res != None else [None,None]
+
+        if current_user != user or current_token != token:
+            os.chdir("./projects/"+sub_folder)
+
+            origin_protocol = origin.split("//")[0]+"//"
+            origin_uri = origin.split("@")[1]
+            new_origin = origin_protocol+user+":"+token+"@"+origin_uri
+
+            os.system("git remote set-url origin "+new_origin)
+
+            os.chdir(initial_dir)
+
 
     os.chdir("./projects/"+sub_folder)
     if os.path.isfile("fqdn.deploy"):
@@ -84,6 +114,8 @@ def deploy(repo,revision,fqdn,env):
             os.system("docker restart "+container)
 
 def compile_docker_compose(use_tls = False):
+    os.system("docker-compose down")
+
     projects_path = "projects/"
 
     all_services = {}
@@ -164,3 +196,5 @@ def compile_docker_compose(use_tls = False):
     base_docker_compose_data["networks"].update(all_networks)
 
     put_yml_file("docker-compose.yml",base_docker_compose_data)
+
+    os.system("docker-compose up -d")
