@@ -8,4 +8,4 @@ docker-compose.yml
 tls/*
 !tls/.keep
 
-tls_traefig_config.yml
+tls_traefik_config.yml

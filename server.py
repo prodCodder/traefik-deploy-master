@@ -2,6 +2,7 @@ import re
 import os
 import json
 import yaml
+import subprocess
 
 def get_string_file(path):
     file = open(path, "r")
@@ -37,11 +38,22 @@ def interpolate(string,datas):
         string = string.replace(interpolation, datas[key] if key in datas else "undefined")
     return string
 
+def get_current_project_name():
+    [current_project_name] = os.getcwd().split("/")[-1:]
+    return current_project_name
+
+def get_docker_containers(prefix = None):
+    containers = subprocess.check_output("docker ps --format 'table {{.Names}}'", shell=True, text=True).split("\n")[1:-1]
+    if prefix != None:
+        return list(filter(lambda container: container.startswith(prefix), containers))
+    return containers
+
 def deploy(repo,revision,fqdn,env):
     initial_dir = os.getcwd()
 
     repo_name = repo.split("/")[-1].split(".git")[0]
     sub_folder = repo_name+"_"+env
+
 
     credentials = get_repo_credentials(repo_name)
     user = credentials["user"]
@@ -64,24 +76,36 @@ def deploy(repo,revision,fqdn,env):
     put_file("fqdn.deploy", fqdn)
     os.chdir(initial_dir)
 
+    current_project_name = get_current_project_name()
+    containers = get_docker_containers(current_project_name+"_")
+
+    for container in containers:
+        if container.startswith(current_project_name+"_"+sub_folder):
+            os.system("docker restart "+container)
+
 def compile_docker_compose(use_tls = False):
     projects_path = "projects/"
 
     all_services = {}
     all_networks = {}
 
-    [current_project_name] = os.getcwd().split("/")[-1:]
+    current_project_name = get_current_project_name()
 
     base_docker_compose_data = get_YAML_file("docker-compose.base.yml")
 
     for sub_folder in os.listdir(projects_path):
         project_path = projects_path+sub_folder+"/"
-        if not os.path.isfile(project_path+"docker-compose.yml"):
+
+        docker_compose_data = None
+        if os.path.isfile(project_path+"docker-compose-for-deploy.yml"):
+            docker_compose_data = get_YAML_file(project_path+"docker-compose-for-deploy.yml")
+        elif os.path.isfile(project_path+"docker-compose.yml"):
+            docker_compose_data = get_YAML_file(project_path+"docker-compose.yml")
+
+        if docker_compose_data == None:
             continue
         
         fqdn = get_string_file(project_path+"fqdn.deploy")
-
-        docker_compose_data = get_YAML_file(project_path+"docker-compose.yml")
         
         for service_key in docker_compose_data["services"]:
             service = docker_compose_data["services"][service_key]
