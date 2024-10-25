@@ -1,6 +1,5 @@
 import re
 import os
-import json
 import yaml
 import subprocess
 
@@ -10,14 +9,11 @@ def get_string_file(path):
     file.close()
     return content
 
-def get_JSON_file(path):
-    return json.loads(get_string_file(path))
-
 def get_YAML_file(path):
     return yaml.safe_load(get_string_file(path))
 
 def get_repo_credentials(repo_name):
-    credentials = get_JSON_file("credentials.json")
+    credentials = get_YAML_file("credentials.yml")
     return credentials[repo_name]
 
 def copy_file(path_a,path_b):
@@ -43,7 +39,7 @@ def get_current_project_name():
     return current_project_name
 
 def get_docker_containers(prefix = None):
-    containers = subprocess.check_output("docker ps --format 'table {{.Names}}'", shell=True, text=True).split("\n")[1:-1]
+    containers = subprocess.check_output("sudo docker ps --format 'table {{.Names}}'", shell=True, text=True).split("\n")[1:-1]
     if prefix != None:
         return list(filter(lambda container: container.startswith(prefix), containers))
     return containers
@@ -111,10 +107,11 @@ def deploy(repo,revision,fqdn,env):
 
     for container in containers:
         if container.startswith(current_project_name+"_"+sub_folder):
-            os.system("docker restart "+container)
+            os.system("sudo docker restart "+container)
 
 def compile_docker_compose(use_tls = False):
-    os.system("docker-compose down")
+    if os.path.isfile("docker-compose.yml"):
+        os.system("sudo docker-compose down")
 
     projects_path = "projects/"
 
@@ -197,4 +194,4 @@ def compile_docker_compose(use_tls = False):
 
     put_yml_file("docker-compose.yml",base_docker_compose_data)
 
-    os.system("docker-compose up -d")
+    os.system("sudo docker-compose up -d")

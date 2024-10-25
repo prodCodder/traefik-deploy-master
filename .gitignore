@@ -1,7 +1,7 @@
 projects/**/*
 !projects/.keep
 
-credentials.json
+credentials.yml
 docker-compose.yml
 *.env
 
