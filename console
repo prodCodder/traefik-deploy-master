@@ -1,0 +1,44 @@
+#!/bin/python3
+
+import sys
+import os
+import commands.all_commands
+
+
+
+#compile_docker_compose(use_tls = False)
+#deploy("https://code.organise.earth/monoke/cameras-scrapper","master","cameras.localhost","prod")
+
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("You need to mention a command to execute")
+        exit()
+    
+    command_name = sys.argv[1]
+
+    command = getattr(commands, command_name, None)
+
+    if command == None:
+        print("The command '"+command_name+"' does not exist")
+        exit()
+
+    execute_fun = getattr(command, "execute", None)
+    if execute_fun == None:
+        print("The command '"+command_name+"' does not contain needed 'execute' function")
+        exit()
+
+    get_arguments = getattr(command, "get_arguments", None)
+    arguments = get_arguments() if get_arguments != None else []
+    arguments = list(map(lambda arg: {"name": arg, "mandatory": True} if type(arg) is str else arg, arguments))
+    nb_needed_arguments = len(list(filter(lambda arg: arg["mandatory"] == True, arguments)))
+    if len(sys.argv) < nb_needed_arguments+2:
+        arguments_string_list = map(lambda arg: arg["name"]+(" (optional)" if arg["mandatory"] == False else ""), arguments)
+        arguments_string_list = ", ".join(arguments_string_list)
+        print("You need to mention all of these arguments : "+arguments_string_list)
+        exit()
+        
+    given_arguments = sys.argv[2:2+len(arguments)]
+    given_arguments = [(arguments[i]["transform"](arg) if "transform" in arguments[i] else arg) for (i,arg) in enumerate(given_arguments)]
+
+    execute_fun(*given_arguments)

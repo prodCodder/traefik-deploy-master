@@ -5,7 +5,12 @@ credentials.yml
 docker-compose.yml
 *.env
 
+**/__pycache__
+
 tls/*
 !tls/.keep
 
 tls_traefik_config.yml
+
+pre_configured_commands/*
+!pre_configured_commands/.keep
