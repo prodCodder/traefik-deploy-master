@@ -1,2 +1,3 @@
 import commands.compile
 import commands.deploy
+import commands.generate_api_password

@@ -1,7 +1,7 @@
 import os
 from scripts.libs import *
 
-def deploy(repo,revision,fqdn,env):
+def deploy(repo, revision, fqdn, env):
     initial_dir = os.getcwd()
 
     repo_name = repo.split("/")[-1].split(".git")[0]
@@ -49,4 +49,4 @@ def deploy(repo,revision,fqdn,env):
 
     for container in containers:
         if container.startswith(current_project_name+"_"+sub_folder):
-            os.system("sudo docker restart "+container)
+            os.system("docker restart "+container)

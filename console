@@ -29,9 +29,12 @@ if __name__ == "__main__":
         exit()
 
     get_arguments = getattr(command, "get_arguments", None)
+
     arguments = get_arguments() if get_arguments != None else []
     arguments = list(map(lambda arg: {"name": arg, "mandatory": True} if type(arg) is str else arg, arguments))
+
     nb_needed_arguments = len(list(filter(lambda arg: arg["mandatory"] == True, arguments)))
+    
     if len(sys.argv) < nb_needed_arguments+2:
         arguments_string_list = map(lambda arg: arg["name"]+(" (optional)" if arg["mandatory"] == False else ""), arguments)
         arguments_string_list = ", ".join(arguments_string_list)

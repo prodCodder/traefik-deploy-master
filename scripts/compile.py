@@ -3,7 +3,7 @@ from scripts.libs import *
 
 def compile(use_tls = False):
     if os.path.isfile("docker-compose.yml"):
-        os.system("sudo docker-compose down")
+        os.system("docker-compose down")
 
     projects_path = "projects/"
 
@@ -86,4 +86,4 @@ def compile(use_tls = False):
 
     put_yml_file("docker-compose.yml",base_docker_compose_data)
 
-    os.system("sudo docker-compose up -d")
+    os.system("docker-compose up -d")

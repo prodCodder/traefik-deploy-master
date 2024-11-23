@@ -1,0 +1,27 @@
+meta {
+  name: Post deploy
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://localhost:8000/deploy
+  body: json
+  auth: basic
+}
+
+headers {
+  : 
+}
+
+auth:basic {
+  username: cameras-scrapper;prod
+  password: bullshit_password
+}
+
+body:json {
+  {
+    "revision": "master",
+    "fqdn": "cameras.localhost"
+  }
+}

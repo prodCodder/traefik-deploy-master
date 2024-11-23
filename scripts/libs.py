@@ -2,6 +2,7 @@ import re
 import os
 import yaml
 import subprocess
+import random
 
 def get_string_file(path):
     file = open(path, "r")
@@ -39,7 +40,7 @@ def get_current_project_name():
     return current_project_name
 
 def get_docker_containers(prefix = None):
-    containers = subprocess.check_output("sudo docker ps --format 'table {{.Names}}'", shell=True, text=True).split("\n")[1:-1]
+    containers = subprocess.check_output("docker ps --format 'table {{.Names}}'", shell=True, text=True).split("\n")[1:-1]
     if prefix != None:
         return list(filter(lambda container: container.startswith(prefix), containers))
     return containers
@@ -58,3 +59,14 @@ def get_sub_project_origin(sub_folder):
         if current_section == "[remote \"origin\"]" and line.startswith("url = "):
             return line[6:]
     return None
+
+
+def generate_password(length = 30):
+    chars = "abcdefghijklmnopqrstuvwxyz0123456789&é\"'(-è_çà)=ˇ~#{}[]|`\^@"
+    password = ""
+    for i in range(length):
+        char = chars[random.randint(0,len(chars)-1)]
+        if random.randint(0,1) == 1:
+            char = char.upper()
+        password += char
+    return password
