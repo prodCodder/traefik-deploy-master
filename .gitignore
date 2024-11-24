@@ -8,7 +8,8 @@ docker-compose.yml
 **/__pycache__
 
 tls/*
-!tls/.keep
+!tls/**/.keep
+!tls/traefik
 
 tls_traefik_config.yml
 

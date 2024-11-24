@@ -1,11 +1,8 @@
-
 import falcon
-from scripts.deploy import deploy
 from base64 import b64decode
-import re
 import os
 from scripts.libs import get_string_file
-
+import hashlib
 
 class AuthMiddleWare:
     def process_request(self, req, resp):
@@ -35,36 +32,14 @@ class AuthMiddleWare:
         if not os.path.isfile("./projects/"+sub_folder+"/password.api"):
             raise falcon.HTTPUnauthorized()
 
+        m = hashlib.sha256()
+        m.update(password.encode())
+        hashed_password = m.hexdigest()
+
         stored_password = get_string_file("./projects/"+sub_folder+"/password.api")
 
-        if stored_password != password:
+        if stored_password != hashed_password:
             raise falcon.HTTPUnauthorized()
 
-        req.env = env
-        req.repo_name = repo_name
-
-
-class DeployResource:
-    def on_post(self, req, resp):
-        body = req.media
-
-        for needed_field in ["revision", "fqdn"]:
-            if needed_field not in body:
-                resp.status = falcon.HTTP_400
-                return
-
-        deploy(req.repo_name, body["revision"], body["fqdn"], req.env)
-
-        resp.status = falcon.HTTP_200
-
-
-
-app = falcon.App(middleware=[AuthMiddleWare()])
-
-app.add_route('/deploy', DeployResource())
-
-if __name__ == '__main__':
-    from wsgiref import simple_server
- 
-    httpd = simple_server.make_server('localhost', 8000, app)
-    httpd.serve_forever()
+        req.context.env = env
+        req.context.repo_name = repo_name

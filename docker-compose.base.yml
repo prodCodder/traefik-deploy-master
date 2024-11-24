@@ -22,7 +22,7 @@ services:
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
     volumes_for_tls:
-      - "./tls:/traefik/config/tls:ro"
+      - "./tls/traefik:/traefik/config/tls:ro"
       - "./tls_traefik_config.yml:/traefik/config/dynamic_conf/tls_traefik_config.yml:ro"
     networks:
       - traefik

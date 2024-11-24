@@ -1,9 +1,9 @@
 tls:
   certificates:
-    - certFile: /config/tls/domainA.crt
-      keyFile: /config/tls/domainA.key
-    - certFile: /config/tls/domainB.crt
-      keyFile: /config/tls/domainB.key
+    - certFile: /traefik/config/tls/domainA.crt
+      keyFile: /traefik/config/tls/domainA.key
+    - certFile: /traefik/config/tls/domainB.crt
+      keyFile: /traefik/config/tls/domainB.key
   stores:
     default:
       defaultCertificate:

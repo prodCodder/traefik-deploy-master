@@ -1,0 +1,22 @@
+#!/bin/python3
+
+import falcon
+from falcon import testing
+from api.middlewares import AuthMiddleWare
+from api.resources import DeployResource
+from wsgiref import simple_server
+import ssl
+        
+
+
+app = falcon.App(middleware=[AuthMiddleWare()])
+app.add_route('/deploy', DeployResource())
+
+client = testing.TestClient(app)
+
+if __name__ == '__main__':
+    httpd = simple_server.make_server('localhost', 4430, app)
+    httpd.socket = ssl.wrap_socket (httpd.socket, 
+        keyfile="tls/api.key", 
+        certfile="tls/api.crt", server_side=True)
+    httpd.serve_forever()
