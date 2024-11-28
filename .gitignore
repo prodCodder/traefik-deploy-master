@@ -7,7 +7,7 @@ docker-compose.yml
 
 **/__pycache__
 
-tls/*
+tls/**/*
 !tls/**/.keep
 !tls/traefik
 

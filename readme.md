@@ -153,4 +153,40 @@ Body :
 ```
 
 The route will automatically the deploy script, automatically checkout on the new revision, store the given fqdn, and restart project docker containers.
+
 To apply apply new fqdn, you have to restart "./console compile"
+
+You also can look at bruno collection stored in the "bruno/" folder, using the bruno application.
+Bruno application is like postman, but storing collection in the project directly
+
+# Use https for projects
+
+## Create keys and certificates
+
+Traefik can manage https connection, so you don't have to allow your projects to manage themself their https.
+
+Firstly, generate tls keys and certificates, for each of your projects :
+ - If you are on local, create selfsigned certificates and keys with openssl like this => https://www.baeldung.com/openssl-self-signed-cert
+ - If you are on production, create signed certificates and keys with a tool like Let's Encrypt
+
+By careful to define in your certificates, when you are creating them, exactly the same FQDN (domain name), as defined in traefik deploy master for your projects.
+
+Don't forget to put your keys and certificates in the "tls/traefik/" folder
+
+## Configure TLS Traefik config file
+
+Now, once you have created your keys and certificates, you have to configure the "tls_traefik_config.yml".
+
+At first, copy "tls_traefik_config.example.yml" into "tls_traefik_config.yml", and configure this last.
+
+In this file, the path "/traefik/config/tls/" is corresponding to your "tls/traefik/" in the Traefik Deploy Master folder.
+Mention in this file, in tls > certificates your keys and certificates corresponding to your projects.
+
+You also can look at this doc => https://doc.traefik.io/traefik/https/tls/
+
+## Start project with tls
+
+Once you have create keys and certificates, and configured them in the config file, compile and run projects with tls enabled :
+```
+./console compile tls
+```
