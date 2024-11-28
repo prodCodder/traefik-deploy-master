@@ -169,6 +169,8 @@ Firstly, generate tls keys and certificates, for each of your projects :
  - If you are on local, create selfsigned certificates and keys with openssl like this => https://www.baeldung.com/openssl-self-signed-cert
  - If you are on production, create signed certificates and keys with a tool like Let's Encrypt
 
+For these certificates, don't use the '-des3' argument when you create the private key, else traefik will can't read your certificates
+
 By careful to define in your certificates, when you are creating them, exactly the same FQDN (domain name), as defined in traefik deploy master for your projects.
 
 Don't forget to put your keys and certificates in the "tls/traefik/" folder

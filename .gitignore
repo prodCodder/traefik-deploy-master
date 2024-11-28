@@ -15,3 +15,5 @@ tls_traefik_config.yml
 
 pre_configured_commands/*
 !pre_configured_commands/.keep
+
+nohup.out
