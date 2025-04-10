@@ -45,8 +45,8 @@ def deploy(repo, revision, fqdn, env):
     os.chdir(initial_dir)
 
     current_project_name = get_current_project_name()
-    containers = get_docker_containers(current_project_name+"_")
+    containers = get_docker_containers(current_project_name+"-")
 
     for container in containers:
-        if container.startswith(current_project_name+"_"+sub_folder):
+        if container.startswith(current_project_name+"-"+sub_folder):
             os.system("docker restart "+container)

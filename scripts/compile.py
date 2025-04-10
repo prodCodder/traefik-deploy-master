@@ -3,7 +3,7 @@ from scripts.libs import *
 
 def compile(use_tls = False):
     if os.path.isfile("docker-compose.yml"):
-        os.system("docker-compose down")
+        os.system("docker compose down")
 
     projects_path = "projects/"
 
@@ -12,7 +12,7 @@ def compile(use_tls = False):
 
     current_project_name = get_current_project_name()
 
-    base_docker_compose_data = get_YAML_file("docker-compose.base.yml")
+    base_docker_compose_data = get_YAML_file("docker compose.base.yml")
 
     for sub_folder in os.listdir(projects_path):
         project_path = projects_path+sub_folder+"/"
@@ -86,4 +86,4 @@ def compile(use_tls = False):
 
     put_yml_file("docker-compose.yml",base_docker_compose_data)
 
-    os.system("docker-compose up -d")
+    os.system("docker compose up -d")

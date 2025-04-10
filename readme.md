@@ -1,7 +1,7 @@
 # What is Traefik Deploy Master
 
 Traefik Deploy Master is a tool, coded in python, to deploy and run dockerized projects in a docker traefik environnement.
-Traefik is a tool, using docker and docker-compose, to run projects and serves them on severals domain names.
+Traefik is a tool, using docker and docker compose, to run projects and serves them on severals domain names.
 
 # How to configure it
 
@@ -50,7 +50,7 @@ You can re-execute the command, with different revisions, it will automatically 
 
 ## Make projects runnable
 
-Of course, the project has to be entirely dockerized, with docker-compose.
+Of course, the project has to be entirely dockerized, with docker compose.
 
 ### Configure docker-compose file
 
@@ -75,7 +75,7 @@ If you have in your project configs or code, mentions container addresses, (like
 If my repo in called "sudoku" and the env is "dev", the subfolder that stores my project in the './projects' is called "sudoku_dev", so, you have to mention your containers address in the project with the prefix "sudoku_dev_".
 If my database container name in my project is 'mysql', call it from your env files and code 'sudoku_dev_mysql'.
 
-# Compile docker-compose and run projects
+# Compile docker-compose.yml and run projects
 
 Once you have your projects runnable, you have compile and run projects, with the command :
 ```
@@ -87,7 +87,7 @@ Once Traefik Deploy Master in running, you can try to connect to your project by
 Of course, the fqdn needs to point to you server IP.
 If you are running on your local computer, you can use fqdn like "<whatyouwant>.localhost", it will always point to your localhost.
 
-If you want to stop the project, type "docker-compose down"
+If you want to stop the project, type "docker compose down"
 
 # Continuous Deployment (CD), by API
 
