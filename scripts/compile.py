@@ -12,7 +12,7 @@ def compile(use_tls = False):
 
     current_project_name = get_current_project_name()
 
-    base_docker_compose_data = get_YAML_file("docker compose.base.yml")
+    base_docker_compose_data = get_YAML_file("docker-compose.base.yml")
 
     for sub_folder in os.listdir(projects_path):
         project_path = projects_path+sub_folder+"/"
