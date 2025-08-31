@@ -3,7 +3,17 @@
 Traefik Deploy Master is a tool, coded in python, to deploy and run dockerized projects in a docker traefik environnement.
 Traefik is a tool, using docker and docker compose, to run projects and serves them on severals domain names.
 
-# How to configure it
+**Configure docker-compose command**
+if you are using a modern version of `docker compose`, included in `docker` command, you have to create an alias in an executable file, from `docker-compose` to `docker compose` command, otherwise, this application will not work correctly.
+*Create the following file in `/bin/docker-compose` :*
+```
+#!/bin/bash
+docker compose "$@"
+```
+*Then :*
+`sudo chmod +x /bin/docker-compose`
+
+# How to configure this application
 
 ## Define credentials
 
